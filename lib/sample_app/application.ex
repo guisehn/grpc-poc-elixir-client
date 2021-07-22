@@ -17,11 +17,19 @@ defmodule SampleApp.Application do
     Supervisor.start_link(children, opts)
   end
 
-  defp send_message(channel) do
-    params = %GrpcPoc.HelloRequest{name: "Rafa"}
-    {:ok, reply} = GrpcPoc.HelloService.Stub.hello(channel, params)
+  defp send_message(channel, counter \\ 1) do
+    # every N requests we simulate an error
+    name =
+      if rem(counter, 5) == 0 do
+        "fail_test" # server returns "not found" when receiving this
+      else
+        "rafa"
+      end
+
+    params = %GrpcPoc.HelloRequest{name: name}
+    reply = GrpcPoc.HelloService.Stub.hello(channel, params)
     IO.inspect(reply, label: "reply")
     :timer.sleep(1000)
-    send_message(channel)
+    send_message(channel, counter + 1)
   end
 end
